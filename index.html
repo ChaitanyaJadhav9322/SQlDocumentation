@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SQL Interactive Documentation</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#f5f5f5;color:#333}
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:240px;min-width:240px;background:#fff;border-right:1px solid #e0e0e0;overflow-y:auto;transition:transform .3s ease;flex-shrink:0}
+.sidebar-header{padding:16px;border-bottom:1px solid #e0e0e0;position:sticky;top:0;background:#fff;z-index:10}
+.sidebar-title{font-size:16px;font-weight:600;color:#333;display:flex;align-items:center;gap:8px}
+.sidebar-title i{font-size:20px;color:#185FA5}
+.search-box{margin-top:10px;position:relative}
+.search-box input{width:100%;padding:6px 10px 6px 30px;font-size:13px;border:1px solid #ddd;border-radius:8px;background:#f9f9f9;color:#333;outline:none}
+.search-box input:focus{border-color:#185FA5}
+.search-box i{position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:14px;color:#888}
+.progress-bar{height:4px;background:#e0e0e0;border-radius:2px;margin-top:10px}
+.progress-fill{height:100%;background:#185FA5;border-radius:2px;transition:width .4s ease}
+.nav-section{padding:8px 0}
+.nav-section-title{font-size:11px;font-weight:600;color:#aaa;text-transform:uppercase;letter-spacing:.06em;padding:6px 16px 4px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:8px 16px;cursor:pointer;font-size:13px;color:#555;border-left:2px solid transparent;transition:all .15s}
+.nav-item:hover{background:#f0f7ff;color:#333}
+.nav-item.active{background:#e6f1fb;color:#0C447C;border-left-color:#185FA5;font-weight:600}
+.nav-item i{font-size:15px;flex-shrink:0}
+.main{flex:1;overflow-y:auto;background:#f5f5f5}
+.header{padding:20px 28px 0;position:sticky;top:0;background:#f5f5f5;z-index:5;border-bottom:1px solid #e0e0e0}
+.breadcrumb{font-size:12px;color:#aaa;margin-bottom:6px}
+.page-title{font-size:22px;font-weight:600;color:#333;margin-bottom:4px}
+.page-subtitle{font-size:14px;color:#777;padding-bottom:16px}
+.top-bar{display:flex;align-items:center;gap:8px}
+.content{padding:24px 28px}
+.section-card{background:#fff;border:1px solid #e0e0e0;border-radius:12px;padding:20px;margin-bottom:16px;animation:fadeUp .3s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.section-card h3{font-size:15px;font-weight:600;color:#333;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.section-card p{font-size:14px;color:#555;line-height:1.7;margin-bottom:12px}
+.code-block{background:#f8f8f8;border:1px solid #e0e0e0;border-left:3px solid #185FA5;border-radius:8px;padding:12px 16px;font-family:monospace;font-size:13px;color:#333;white-space:pre;overflow-x:auto;margin-bottom:12px}
+.kw{color:#185FA5;font-weight:600}
+.str{color:#3B6D11}
+.num{color:#BA7517}
+.run-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:#e6f1fb;color:#0C447C;border:1px solid #185FA5;border-radius:8px;font-size:13px;cursor:pointer;transition:all .15s}
+.run-btn:hover{background:#B5D4F4}
+.run-btn i{font-size:14px}
+.result-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:12px;animation:fadeUp .25s ease}
+.result-table th{background:#f0f0f0;padding:8px 12px;text-align:left;font-weight:600;font-size:12px;color:#555;border-bottom:1px solid #ddd}
+.result-table td{padding:8px 12px;border-bottom:1px solid #f0f0f0;color:#333}
+.result-table tr:hover td{background:#f9f9f9}
+.result-table tr.highlight td{background:#e6f1fb;animation:rowFlash .4s ease}
+@keyframes rowFlash{from{background:#B5D4F4}to{background:#e6f1fb}}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:600}
+.tag-blue{background:#e6f1fb;color:#0C447C}
+.tag-green{background:#EAF3DE;color:#27500A}
+.tag-amber{background:#FAEEDA;color:#633806}
+.tag-red{background:#FCEBEB;color:#791F1F}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.note{background:#FAEEDA;border-left:3px solid #BA7517;border-radius:8px;padding:10px 14px;font-size:13px;color:#633806;margin:12px 0;display:flex;gap:8px}
+.note i{flex-shrink:0;font-size:15px;margin-top:1px}
+.badge-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.wildcard-table{width:100%;border-collapse:collapse;font-size:13px}
+.wildcard-table th{background:#e6f1fb;color:#0C447C;padding:8px 12px;text-align:left;font-size:12px;font-weight:600}
+.wildcard-table td{padding:8px 12px;border-bottom:1px solid #f0f0f0;color:#333}
+.wildcard-table tr:nth-child(even) td{background:#f9f9f9}
+.try-it{background:#f9f9f9;border:1px solid #e0e0e0;border-radius:8px;padding:12px;margin-top:12px}
+.try-it label{font-size:12px;color:#777;margin-bottom:6px;display:block}
+.try-it input{width:100%;padding:6px 10px;font-size:13px;border:1px solid #ddd;border-radius:8px;background:#fff;color:#333;margin-bottom:8px;font-family:monospace;outline:none}
+.result-msg{font-size:13px;padding:8px 12px;border-radius:8px;margin-top:8px}
+.result-ok{background:#EAF3DE;color:#27500A}
+.result-err{background:#FCEBEB;color:#791F1F}
+.mobile-toggle{display:none;padding:12px 16px;cursor:pointer;color:#555;background:none;border:none;font-size:20px}
+@media(max-width:700px){
+  .sidebar{position:fixed;top:0;left:0;height:100%;z-index:100;transform:translateX(-100%);box-shadow:2px 0 12px rgba(0,0,0,.15)}
+  .sidebar.open{transform:translateX(0)}
+  .mobile-toggle{display:block}
+  .grid2{grid-template-columns:1fr}
+  .content{padding:16px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-title"><i class="ti ti-database"></i> SQL Reference</div>
+      <div class="search-box"><i class="ti ti-search"></i><input type="text" placeholder="Search topics…" oninput="filterNav(this.value)"></div>
+      <div class="progress-bar"><div class="progress-fill" id="progress" style="width:0%"></div></div>
+    </div>
+    <div id="navList"></div>
+  </div>
+
+  <div class="main">
+    <div class="header">
+      <div class="top-bar">
+        <button class="mobile-toggle" onclick="toggleSidebar()"><i class="ti ti-menu-2"></i></button>
+        <div>
+          <div class="breadcrumb" id="breadcrumb">SQL Reference</div>
+          <div class="page-title" id="pageTitle">Welcome to SQL</div>
+          <div class="page-subtitle" id="pageSubtitle">Select a topic from the sidebar to begin</div>
+        </div>
+      </div>
+    </div>
+    <div class="content" id="content"></div>
+  </div>
+</div>
+
+<script>
+const customers = [
+  {CustomerID:1,CustomerName:'Alfreds',City:'Berlin',Country:'Germany',Phone:'+49 30 1234'},
+  {CustomerID:2,CustomerName:'Ana Trujillo',City:'Mexico City',Country:'Mexico',Phone:null},
+  {CustomerID:3,CustomerName:'Antonio',City:'Mexico City',Country:'Mexico',Phone:'+52 5 789'},
+  {CustomerID:4,CustomerName:'Around the Horn',City:'London',Country:'UK',Phone:'+44 71 555'},
+  {CustomerID:5,CustomerName:'Berglunds',City:'Luleå',Country:'Sweden',Phone:'+46 0921 12'},
+  {CustomerID:6,CustomerName:'Blauer See',City:'Mannheim',Country:'Germany',Phone:null},
+  {CustomerID:7,CustomerName:'Blondel',City:'Strasbourg',Country:'France',Phone:'+33 88 60'},
+  {CustomerID:8,CustomerName:'Bólido Comidas',City:'Madrid',Country:'Spain',Phone:'+34 91 555'},
+  {CustomerID:9,CustomerName:'Bon App',City:'Marseille',Country:'France',Phone:'+33 91 24'},
+  {CustomerID:10,CustomerName:'Bottom-Dollar',City:'Tsawwassen',Country:'Canada',Phone:'+1 604 555'},
+];
+const products = [
+  {ProductID:1,ProductName:'Chai',Category:'Beverages',Price:18.00},
+  {ProductID:2,ProductName:'Chang',Category:'Beverages',Price:19.00},
+  {ProductID:3,ProductName:'Aniseed Syrup',Category:'Condiments',Price:10.00},
+  {ProductID:4,ProductName:'Mishi Kobe Niku',Category:'Meat',Price:97.00},
+  {ProductID:5,ProductName:'Ikura',Category:'Seafood',Price:31.00},
+  {ProductID:6,ProductName:'Queso Cabrales',Category:'Dairy',Price:21.00},
+  {ProductID:7,ProductName:'Genen Shouyu',Category:'Condiments',Price:15.50},
+  {ProductID:8,ProductName:'Pavlova',Category:'Confections',Price:17.45},
+];
+const orders = [
+  {OrderID:10248,CustomerID:1,OrderDate:'2024-07-04'},
+  {OrderID:10249,CustomerID:2,OrderDate:'2024-07-05'},
+  {OrderID:10250,CustomerID:1,OrderDate:'2024-07-08'},
+  {OrderID:10251,CustomerID:4,OrderDate:'2024-07-09'},
+  {OrderID:10252,CustomerID:3,OrderDate:'2024-07-11'},
+];
+
+function makeTable(rows,highlight=false){
+  if(!rows||!rows.length) return '<p style="font-size:13px;color:#888;margin-top:8px">No results found.</p>';
+  const keys=Object.keys(rows[0]);
+  return `<p style="font-size:12px;color:#888;margin-top:10px">${rows.length} row${rows.length!==1?'s':''} returned</p>
+  <table class="result-table"><thead><tr>${keys.map(k=>`<th>${k}</th>`).join('')}</tr></thead>
+  <tbody>${rows.map((r,i)=>`<tr class="${highlight&&i===rows.length-1?'highlight':''}">${keys.map(k=>`<td>${r[k]===null?'<em style="color:#bbb">NULL</em>':r[k]}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+}
+
+const queryMap = {
+  'all':()=>makeTable(customers),
+  'select-cols':()=>makeTable(customers.map(r=>({CustomerName:r.CustomerName,Country:r.Country}))),
+  'distinct':()=>makeTable([...new Map(customers.map(r=>[r.Country,{Country:r.Country}])).values()]),
+  'where':()=>makeTable(customers.filter(r=>r.Country==='Germany')),
+  'orderasc':()=>makeTable([...customers].sort((a,b)=>a.CustomerName.localeCompare(b.CustomerName)).map(r=>({CustomerName:r.CustomerName,Country:r.Country}))),
+  'and':()=>makeTable(customers.filter(r=>r.Country==='Germany'&&r.City==='Berlin')),
+  'or':()=>makeTable(customers.filter(r=>r.Country==='Germany'||r.Country==='France')),
+  'not':()=>makeTable(customers.filter(r=>r.Country!=='Germany')),
+  'insert':()=>{const c=[...customers,{CustomerID:11,CustomerName:'Alice',City:'London',Country:'UK',Phone:null}];return '<p class="result-msg result-ok">✓ 1 row inserted successfully</p>'+makeTable(c.slice(-3),true);},
+  'update':()=>'<p class="result-msg result-ok">✓ 1 row updated</p>'+makeTable(customers.filter(r=>r.CustomerName==='Alfreds').map(r=>({...r,City:'Hamburg'}))),
+  'delete':()=>'<p class="result-msg result-ok">✓ 2 rows deleted (France customers removed)</p>'+makeTable(customers.filter(r=>r.Country!=='France')),
+  'aggregate':()=>{const prices=products.map(p=>p.Price);return makeTable([{MinPrice:Math.min(...prices).toFixed(2),MaxPrice:Math.max(...prices).toFixed(2),AvgPrice:(prices.reduce((a,b)=>a+b,0)/prices.length).toFixed(2),TotalRows:products.length}]);},
+  'groupby':()=>{const m={};customers.forEach(c=>{m[c.Country]=(m[c.Country]||0)+1;});return makeTable(Object.entries(m).sort((a,b)=>b[1]-a[1]).map(([c,n])=>({Country:c,CustomerCount:n})));},
+  'having':()=>{const m={};customers.forEach(c=>{m[c.Country]=(m[c.Country]||0)+1;});return makeTable(Object.entries(m).filter(([,n])=>n>=2).sort((a,b)=>b[1]-a[1]).map(([c,n])=>({Country:c,Cnt:n})));},
+  'innerjoin':()=>makeTable(orders.map(o=>{const c=customers.find(c=>c.CustomerID===o.CustomerID);return{OrderID:o.OrderID,CustomerName:c?c.CustomerName:'?',OrderDate:o.OrderDate};})),
+  'union':()=>makeTable([...new Set([...customers.map(c=>c.City),...['Berlin','London','Madrid','Paris']])].slice(0,8).map(c=>({City:c}))),
+  'subquery':()=>{const avg=products.reduce((s,p)=>s+p.Price,0)/products.length;return makeTable(products.filter(p=>p.Price>avg).map(p=>({ProductName:p.ProductName,Price:p.Price,Category:p.Category})));},
+  'null':()=>makeTable(customers.filter(r=>r.Phone===null).map(r=>({CustomerName:r.CustomerName,Phone:r.Phone}))),
+  'alias':()=>makeTable(orders.map(o=>{const c=customers.find(c=>c.CustomerID===o.CustomerID);return{Name:c?c.CustomerName:'?',Location:c?c.City:'?',OrderDate:o.OrderDate};})),
+};
+
+function runQuery(key){
+  const el=document.getElementById('qr-'+key);
+  if(!el)return;
+  el.innerHTML='<p style="font-size:12px;color:#aaa;margin-top:8px">Running query…</p>';
+  setTimeout(()=>{el.innerHTML=queryMap[key]?queryMap[key]():'<p>No data</p>';},350);
+}
+
+function tryWhere(){
+  const val=document.getElementById('whereCountry').value.trim();
+  const res=customers.filter(r=>r.Country.toLowerCase()===val.toLowerCase());
+  document.getElementById('tryWhereResult').innerHTML='<div class="code-block" style="margin:8px 0;font-size:12px"><span class="kw">SELECT</span> * <span class="kw">FROM</span> Customers <span class="kw">WHERE</span> Country = <span class="str">\''+val+'\'</span>;</div>'+makeTable(res);
+}
+
+function tryLike(){
+  const pat=document.getElementById('likePattern').value.trim();
+  const re=new RegExp('^'+pat.replace(/%/g,'.*').replace(/_/g,'.')+'$','i');
+  const res=customers.filter(r=>re.test(r.CustomerName)).map(r=>({CustomerName:r.CustomerName,Country:r.Country}));
+  document.getElementById('tryLikeResult').innerHTML='<div class="code-block" style="margin:8px 0;font-size:12px"><span class="kw">SELECT</span> * <span class="kw">FROM</span> Customers <span class="kw">WHERE</span> CustomerName <span class="kw">LIKE</span> <span class="str">\''+pat+'\'</span>;</div>'+makeTable(res);
+}
+
+const topics = [
+  {id:'home',label:'SQL Home',icon:'ti-home',cat:'Getting Started',subtitle:'Overview & quick examples',
+   render:()=>`
+    <div class="section-card">
+      <h3><i class="ti ti-info-circle" style="color:#185FA5"></i> What is SQL?</h3>
+      <p>SQL (Structured Query Language) is the standard language for storing, manipulating, and retrieving data in relational databases. Works with MySQL, PostgreSQL, SQL Server, Oracle, SQLite, and more.</p>
+      <div class="badge-row">
+        <span class="tag tag-blue">ANSI Standard since 1986</span>
+        <span class="tag tag-green">Works with all major RDBMS</span>
+        <span class="tag tag-amber">Declarative language</span>
+      </div>
+    </div>
+    <div class="section-card">
+      <h3><i class="ti ti-terminal" style="color:#185FA5"></i> Your first query</h3>
+      <p>Click <strong>▶ Run</strong> to execute and see live results from the sample Customers table.</p>
+      <div class="code-block"><span class="kw">SELECT</span> * <span class="kw">FROM</span> Customers;</div>
+      <button class="run-btn" onclick="runQuery('all')"><i class="ti ti-player-play"></i> Run query</button>
+      <div id="qr-all"></div>
+    </div>
+    <div class="section-card">
+      <h3><i class="ti ti-list" style="color:#185FA5"></i> Key SQL commands</h3>
+      <div class="grid2">
+        ${[['SELECT','Read data from tables','tag-blue'],['INSERT INTO','Add new records','tag-green'],['UPDATE','Modify existing records','tag-amber'],['DELETE','Remove records','tag-red'],['CREATE TABLE','Create a new table','tag-blue'],['DROP TABLE','Delete a table','tag-red'],['JOIN','Combine rows from tables','tag-green'],['GROUP BY','Aggregate results','tag-amber']].map(([cmd,desc,cls])=>`<div style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid #f0f0f0"><span class="tag ${cls}" style="flex-shrink:0;font-family:monospace">${cmd}</span><span style="font-size:12px;color:#777">${desc}</span></div>`).join('')}
+      </div>
+    </div>`
+  },
+  {id:'select',label:'SELECT',icon:'ti-table',cat:'Basics',subtitle:'Retrieve data from a table',
+   render:()=>`
+    <div class="section-card">
+      <h3>Syntax</h3>
+      <div class="code-block"><span class="kw">SELECT</span> column1, column2 <span class="kw">FROM</span> table_name;</div>
+      <p>Use <code>*</code> to select all columns. Always specify only the columns you need for better performance.</p>
+    </div>
+    <div class="section-card">
+      <h3><i class="ti ti-player-play" style="color:#185FA5"></i> Select specific columns</h3>
+      <div class="code-block"><span class="kw">SELECT</span> CustomerName, Country <span class="kw">FROM</span> Customers;</div>
+      <button class="run-btn" onclick="runQuery('select-cols')"><i class="ti ti-player-play"></i> Run</button>
+      <div id="qr-select-cols"></div>
+    </div>
+    <div class="section-card">
+      <h3>Select all columns</h3>
+      <div class="code-block"><span class="kw">SELECT</span> * <span class="kw">FROM</span> Customers;</div>
+      <button class="run-btn" onclick="runQuery('all')"><i class="ti ti-player-play"></i> Run</button>
+      <div id="qr-all"></div>
+    </div>`
+  },
+  {id:'distinct',label:'SELECT DISTINCT',icon:'ti-filter',cat:'Basics',subtitle:'Return only unique values',
+   render:()=>`
+    <div class="section-card">
+      <h3>What is DISTINCT?</h3>
+      <p><code>SELECT DISTINCT</code> eliminates duplicate rows from results.</p>
+      <div class="code-block"><span class="kw">SELECT DISTINCT</span> column_name <span class="kw">FROM</span> table_name;</div>
+    </div>
+    <div class="section-card">
+      <h3><i class="ti ti-player-play" style="color:#185FA5"></i> Unique countries</h3>
+      <div class="code-block"><span class="kw">SELECT DISTINCT</span> Country <span class="kw">FROM</span> Customers;</div>
+      <button class="run-btn" onclick="runQuery('distinct')"><i class="ti ti-player-play"></i> Run</button>
+      <div id="qr-distinct"></div>
+    </div>`
+  },
+  {id:'where',label:'WHERE',icon:'ti-filter-check',cat:'Filtering',subtitle:'Filter rows by condition',
+   render:()=>`
+    <div class="section-card">
+      <h3>Syntax</h3>
+      <div class="code-block"><span class="kw">SELECT</span> col1 <span class="kw">FROM</span> table <span class="kw">WHERE</span> condition;</div>
+      <p>Operators: <code>=</code> <code>!=</code> <code>&lt;</code> <code>&gt;</code> <code>BETWEEN</code> <code>LIKE</code> <code>IN</code></p>
+    </div>
+    <div class="section-card">
+      <h3><i class="ti ti-player-play" style="color:#185FA5"></i> Filter by country</h3>
+      <div class="code-block"><span class="kw">SELECT</span> * <span class="kw">FROM</span> Customers <span class="kw">WHERE</span> Country = <span class="str">'Germany'</span>;</div>
+      <button class="run-btn" onclick="runQuery('where')"><i class="ti ti-player-play"></i> Run</button>
+      <div id="qr-where"></div>
+    </div>
+    <div class="section-card">
+      <h3><i class="ti ti-pencil" style="color:#185FA5"></i> Try it yourself</h3>
+      <div class="try-it">
+        <label>Filter customers by country:</label>
+        <input type="text" id="whereCountry" placeholder="e.g. France" value="Germany">
+        <button class="run-btn" onclick="tryWhere()"><i class="ti ti-player-play"></i> Filter</button>
+        <div id="tryWhereResult"></div>
+      </div>
+    </div>`
+  },
+  {id:'orderby',label:'ORDER BY',icon:'ti-arrows-sort',cat:'Filtering',subtitle:'Sort query results',
+   render:()=>`
+    <div class="section-card">
+      <h3>Syntax</h3>
+      <div class="code-block"><span class="kw">SELECT</span> col <span class="kw">FROM</span> table <span class="kw">ORDER BY</span> col <span class="kw">ASC</span>|<span class="kw">DESC</span>;</div>
+    </div>
+    <div class="section-card">
+      <h3><i class="ti ti-player-play" style="color:#185FA5"></i> Sort A-Z</h3>
+      <div class="code-block"><span class="kw">SELECT</span> CustomerName, Country <span class="kw">FROM</span> Customers <span class="kw">ORDER BY</span> CustomerName <span class="kw">ASC</span>;</div>
+      <button class="run-btn" onclick="runQuery('orderasc')"><i class="ti ti-player-play"></i> Run</button>
+      <div id="qr-orderasc"></div>
+    </div>`
+  },
+  {id:'andornot',label:'AND / OR / NOT',icon:'ti-logic-and',cat:'Filtering',subtitle:'Combine multiple conditions',
+   render:()=>`
+    <div class="section-card">
+      <h3>AND</h3>
+      <div class="code-block"><span class="kw">SELECT</span> * <span class="kw">FROM</span> Customers <span class="kw">WHERE</span> Country = <span class="str">'Germany'</span> <span class="kw">AND</span> City = <span class="str">'Berlin'</span>;</div>
+      <button class="run-btn" onclick="runQuery('and')"><i class="ti ti-player-play"></i> Run</button>
+      <div id="qr-and"></div>
+    </div>
+    <div class="section-card">
+      <h3>OR</h3>
+      <div class="code-block"><span class="kw">SELECT</span> * <span class="kw">FROM</span> Customers <span class="kw">WHERE</span> Country = <span class="str">'Germany'</span> <span class="kw">OR</span> Country = <span class="str">'France'</span>;</div>
+      <button class="run-btn" onclick="runQuery('or')"><i class="ti ti-player-play"></i> Run</button>
+      <div id="qr-or"></div>
+    </div>
+    <div class="section-card">
+      <h3>NOT</h3>
+      <div class="code-block"><span class="kw">SELECT</span> * <span class="kw">FROM</span> Customers <span class="kw">WHERE NOT</span> Country = <span class="str">'Germany'</span>;</div>
+      <button class="run-btn" onclick="runQuery('not')"><i class="ti ti-player-play"></i> Run</button>
+      <div id="qr-not"></div>
+    </div>`
+  },
+  {id:'insert',label:'INSERT INTO',icon:'ti-plus',cat:'Modifying Data',subtitle:'Add new records',
+   render:()=>`
+    <div class="section-card">
+      <h3>Syntax</h3>
+      <div class="code-block"><span class="kw">INSERT INTO</span> table (col1, col2) <span class="kw">VALUES</span> (val1, val2);</div>
+      <div class="note"><i class="ti ti-alert-triangle"></i> Always specify column names to avoid errors if the table structure changes.</div>
+    </div>
+    <div class="section-card">
+      <h3>Example</h3>
+      <div class="code-block"><span class="kw">INSERT INTO</span> Customers (CustomerName, City, Country)
+<span class="kw">VALUES</span> (<span class="str">'Alice'</span>, <span class="str">'London'</span>, <span class="str">'UK'</span>);</div>
+      <button class="run-btn" onclick="runQuery('insert')"><i class="ti ti-player-play"></i> Simulate</button>
+      <div id="qr-insert"></div>
+    </div>`
+  },
+  {id:'update',label:'UPDATE',icon:'ti-edit',cat:'Modifying Data',subtitle:'Modify existing records',
+   render:()=>`
+    <div class="section-card">
+      <h3>Syntax</h3>
+      <div class="code-block"><span class="kw">UPDATE</span> table <span class="kw">SET</span> col1=val1 <span class="kw">WHERE</span> condition;</div>
+      <div class="note"><i class="ti ti-alert-triangle"></i> <strong>Always use WHERE!</strong> Without it, every row will be updated.</div>
+    </div>
+    <div class="section-card">
+      <h3>Example</h3>
+      <div class="code-block"><span class="kw">UPDATE</span> Customers
+<span class="kw">SET</span> City = <span class="str">'Hamburg'</span>
+<span class="kw">WHERE</span> CustomerName = <span class="str">'Alfreds'</span>;</div>
+      <button class="run-btn" onclick="runQuery('update')"><i class="ti ti-player-play"></i> Simulate</button>
+      <div id="qr-update"></div>
+    </div>`
+  },
+  {id:'delete',label:'DELETE',icon:'ti-trash',cat:'Modifying Data',subtitle:'Remove records from a table',
+   render:()=>`
+    <div class="section-card">
+      <h3>Syntax</h3>
+      <div class="code-block"><span class="kw">DELETE FROM</span> table <span class="kw">WHERE</span> condition;</div>
+      <div class="note"><i class="ti ti-alert-triangle"></i> <strong>Always use WHERE!</strong> <code>DELETE FROM Customers;</code> deletes ALL rows.</div>
+    </div>
+    <div class="section-card">
+      <h3>Example</h3>
+      <div class="code-block"><span class="kw">DELETE FROM</span> Customers <span class="kw">WHERE</span> Country = <span class="str">'France'</span>;</div>
+      <button class="run-btn" onclick="runQuery('delete')"><i class="ti ti-player-play"></i> Simulate</button>
+      <div id="qr-delete"></div>
+    </div>`
+  },
+  {id:'aggregate',label:'Aggregate Functions',icon:'ti-math-function',cat:'Aggregation',subtitle:'MIN, MAX, COUNT, SUM, AVG',
+   render:()=>`
+    <div class="section-card">
+      <h3>The 5 aggregate functions</h3>
+      <div class="grid2">
+        ${[['MIN()','Smallest value','tag-blue'],['MAX()','Largest value','tag-green'],['COUNT()','Number of rows','tag-amber'],['SUM()','Total of a column','tag-blue'],['AVG()','Average of a column','tag-green']].map(([fn,desc,cls])=>`<div style="padding:8px;border:1px solid #e0e0e0;border-radius:8px"><span class="tag ${cls}" style="font-family:monospace;margin-bottom:4px;display:inline-flex">${fn}</span><br><span style="font-size:12px;color:#777">${desc}</span></div>`).join('')}
+      </div>
+    </div>
+    <div class="section-card">
+      <h3><i class="ti ti-player-play" style="color:#185FA5"></i> Run all aggregates</h3>
+      <div class="code-block"><span class="kw">SELECT</span>
+  <span class="kw">MIN</span>(Price) <span class="kw">AS</span> MinPrice,
+  <span class="kw">MAX</span>(Price) <span class="kw">AS</span> MaxPrice,
+  <span class="kw">AVG</span>(Price) <span class="kw">AS</span> AvgPrice,
+  <span class="kw">COUNT</span>(*) <span class="kw">AS</span> TotalRows
+<span class="kw">FROM</span> Products;</div>
+      <button class="run-btn" onclick="runQuery('aggregate')"><i class="ti ti-player-play"></i> Run</button>
+      <div id="qr-aggregate"></div>
+    </div>`
+  },
+  {id:'groupby',label:'GROUP BY',icon:'ti-stack',cat:'Aggregation',subtitle:'Group rows and aggregate',
+   render:()=>`
+    <div class="section-card">
+      <h3>Syntax</h3>
+      <div class="code-block"><span class="kw">SELECT</span> col, <span class="kw">COUNT</span>(*) <span class="kw">FROM</span> table <span class="kw">GROUP BY</span> col;</div>
+    </div>
+    <div class="section-card">
+      <h3><i class="ti ti-player-play" style="color:#185FA5"></i> Count customers per country</h3>
+      <div class="code-block"><span class="kw">SELECT</span> Country, <span class="kw">COUNT</span>(*) <span class="kw">AS</span> CustomerCount
+<span class="kw">FROM</span> Customers
+<span class="kw">GROUP BY</span> Country
+<span class="kw">ORDER BY</span> CustomerCount <span class="kw">DESC</span>;</div>
+      <button class="run-btn" onclick="runQuery('groupby')"><i class="ti ti-player-play"></i> Run</button>
+      <div id="qr-groupby"></div>
+    </div>`
+  },
+  {id:'having',label:'HAVING',icon:'ti-filter-cog',cat:'Aggregation',subtitle:'Filter grouped results',
+   render:()=>`
+    <div class="section-card">
+      <h3>HAVING vs WHERE</h3>
+      <div class="grid2">
+        <div style="padding:10px;border:1px solid #ddd;border-radius:8px"><div class="tag tag-blue" style="margin-bottom:6px">WHERE</div><p style="font-size:13px;color:#777">Filters rows <em>before</em> grouping</p></div>
+        <div style="padding:10px;border:1px solid #ddd;border-radius:8px"><div class="tag tag-green" style="margin-bottom:6px">HAVING</div><p style="font-size:13px;color:#777">Filters groups <em>after</em> aggregation</p></div>
+      </div>
+    </div>
+    <div class="section-card">
+      <h3><i class="ti ti-player-play" style="color:#185FA5"></i> Countries with 2+ customers</h3>
+      <div class="code-block"><span class="kw">SELECT</span> Country, <span class="kw">COUNT</span>(*) <span class="kw">AS</span> Cnt
+<span class="kw">FROM</span> Customers
+<span class="kw">GROUP BY</span> Country
+<span class="kw">HAVING</span> Cnt >= <span class="num">2</span>;</div>
+      <button class="run-btn" onclick="runQuery('having')"><i class="ti ti-player-play"></i> Run</button>
+      <div id="qr-having"></div>
+    </div>`
+  },
+  {id:'like',label:'LIKE & Wildcards',icon:'ti-asterisk',cat:'Pattern Matching',subtitle:'Search with patterns',
+   render:()=>`
+    <div class="section-card">
+      <h3>Wildcard characters</h3>
+      <table class="wildcard-table">
+        <tr><th>Symbol</th><th>Matches</th><th>Example</th></tr>
+        <tr><td><code>%</code></td><td>Zero or more characters</td><td><code>LIKE 'A%'</code> → starts with A</td></tr>
+        <tr><td><code>_</code></td><td>Exactly one character</td><td><code>LIKE '_a%'</code> → 2nd char is a</td></tr>
+        <tr><td><code>[abc]</code></td><td>One char from set</td><td><code>LIKE '[ABC]%'</code></td></tr>
+        <tr><td><code>[^abc]</code></td><td>Not in set</td><td><code>LIKE '[^A]%'</code></td></tr>
+      </table>
+    </div>
+    <div class="section-card">
+      <h3><i class="ti ti-pencil" style="color:#185FA5"></i> Live pattern tester</h3>
+      <div class="try-it">
+        <label>Test a LIKE pattern against customer names:</label>
+        <input type="text" id="likePattern" placeholder="e.g. A% or %er%" value="A%">
+        <button class="run-btn" onclick="tryLike()"><i class="ti ti-player-play"></i> Test pattern</button>
+        <div id="tryLikeResult"></div>
+      </div>
+    </div>`
+  },
+  {id:'joins',label:'JOINs',icon:'ti-arrows-join',cat:'Joins',subtitle:'Combine rows from multiple tables',
+   render:()=>`
+    <div class="section-card">
+      <h3>Types of JOINs</h3>
+      <div class="grid2">
+        ${[['INNER JOIN','Only matching rows in both','tag-blue'],['LEFT JOIN','All from left + matches from right','tag-green'],['RIGHT JOIN','All from right + matches from left','tag-amber'],['FULL OUTER JOIN','All rows from both tables','tag-red'],['SELF JOIN','Table joined with itself','tag-blue'],['CROSS JOIN','Every combination of rows','tag-green']].map(([t,d,c])=>`<div style="padding:8px;border:1px solid #e0e0e0;border-radius:8px"><div class="tag ${c}" style="margin-bottom:4px;font-family:monospace">${t}</div><p style="font-size:12px;color:#777">${d}</p></div>`).join('')}
+      </div>
+    </div>
+    <div class="section-card">
+      <h3><i class="ti ti-player-play" style="color:#185FA5"></i> INNER JOIN example</h3>
+      <div class="code-block"><span class="kw">SELECT</span> Orders.OrderID, Customers.CustomerName
+<span class="kw">FROM</span> Orders
+<span class="kw">INNER JOIN</span> Customers
+  <span class="kw">ON</span> Orders.CustomerID = Customers.CustomerID;</div>
+      <button class="run-btn" onclick="runQuery('innerjoin')"><i class="ti ti-player-play"></i> Run</button>
+      <div id="qr-innerjoin"></div>
+    </div>`
+  },
+  {id:'union',label:'UNION',icon:'ti-arrows-up-down',cat:'Set Operations',subtitle:'Combine result sets',
+   render:()=>`
+    <div class="section-card">
+      <h3>UNION rules</h3>
+      <ul style="font-size:14px;color:#555;padding-left:16px;line-height:2">
+        <li>Same number of columns in each SELECT</li>
+        <li>Compatible data types</li>
+        <li>UNION removes duplicates; UNION ALL keeps them</li>
+      </ul>
+    </div>
+    <div class="section-card">
+      <h3><i class="ti ti-player-play" style="color:#185FA5"></i> Example</h3>
+      <div class="code-block"><span class="kw">SELECT</span> City <span class="kw">FROM</span> Customers
+<span class="kw">UNION</span>
+<span class="kw">SELECT</span> City <span class="kw">FROM</span> Suppliers;</div>
+      <button class="run-btn" onclick="runQuery('union')"><i class="ti ti-player-play"></i> Run</button>
+      <div id="qr-union"></div>
+    </div>`
+  },
+  {id:'subquery',label:'Subqueries',icon:'ti-brackets',cat:'Advanced',subtitle:'Nested SELECT statements',
+   render:()=>`
+    <div class="section-card">
+      <h3>What is a subquery?</h3>
+      <p>A subquery is a SELECT nested inside another query. Can appear in WHERE, FROM, or SELECT clauses.</p>
+      <div class="code-block"><span class="kw">SELECT</span> * <span class="kw">FROM</span> Products
+<span class="kw">WHERE</span> Price > (<span class="kw">SELECT AVG</span>(Price) <span class="kw">FROM</span> Products);</div>
+      <button class="run-btn" onclick="runQuery('subquery')"><i class="ti ti-player-play"></i> Run</button>
+      <div id="qr-subquery"></div>
+    </div>`
+  },
+  {id:'null',label:'NULL Values',icon:'ti-circle-dotted',cat:'Advanced',subtitle:'Handle missing data',
+   render:()=>`
+    <div class="section-card">
+      <h3>NULL is not zero or empty string</h3>
+      <div class="grid2">
+        <div style="padding:10px;border:1px solid #F09595;border-radius:8px;background:#FCEBEB"><div class="tag tag-red" style="margin-bottom:6px">Wrong ✗</div><code>WHERE col = NULL</code></div>
+        <div style="padding:10px;border:1px solid #97C459;border-radius:8px;background:#EAF3DE"><div class="tag tag-green" style="margin-bottom:6px">Correct ✓</div><code>WHERE col IS NULL</code></div>
+      </div>
+    </div>
+    <div class="section-card">
+      <h3><i class="ti ti-player-play" style="color:#185FA5"></i> Find NULL phone numbers</h3>
+      <div class="code-block"><span class="kw">SELECT</span> CustomerName, Phone <span class="kw">FROM</span> Customers <span class="kw">WHERE</span> Phone <span class="kw">IS NULL</span>;</div>
+      <button class="run-btn" onclick="runQuery('null')"><i class="ti ti-player-play"></i> Run</button>
+      <div id="qr-null"></div>
+    </div>
+    <div class="section-card">
+      <h3>COALESCE — replace NULL with a default</h3>
+      <div class="code-block"><span class="kw">SELECT</span> CustomerName, <span class="kw">COALESCE</span>(Phone, <span class="str">'N/A'</span>) <span class="kw">AS</span> Phone <span class="kw">FROM</span> Customers;</div>
+    </div>`
+  },
+  {id:'aliases',label:'Aliases',icon:'ti-tag',cat:'Advanced',subtitle:'Rename columns and tables',
+   render:()=>`
+    <div class="section-card">
+      <h3>Column alias</h3>
+      <div class="code-block"><span class="kw">SELECT</span> CustomerName <span class="kw">AS</span> Name, City <span class="kw">AS</span> Location <span class="kw">FROM</span> Customers;</div>
+    </div>
+    <div class="section-card">
+      <h3>Table alias (useful in JOINs)</h3>
+      <div class="code-block"><span class="kw">SELECT</span> c.CustomerName, o.OrderDate
+<span class="kw">FROM</span> Customers <span class="kw">AS</span> c
+<span class="kw">INNER JOIN</span> Orders <span class="kw">AS</span> o <span class="kw">ON</span> c.CustomerID = o.CustomerID;</div>
+      <button class="run-btn" onclick="runQuery('alias')"><i class="ti ti-player-play"></i> Run</button>
+      <div id="qr-alias"></div>
+    </div>`
+  },
+];
+
+const cats={};
+topics.forEach(t=>{(cats[t.cat]=cats[t.cat]||[]).push(t);});
+const navList=document.getElementById('navList');
+let visited=new Set();
+let currentTopic='home';
+
+function buildNav(filter=''){
+  navList.innerHTML='';
+  Object.entries(cats).forEach(([cat,items])=>{
+    const filtered=items.filter(t=>t.label.toLowerCase().includes(filter.toLowerCase()));
+    if(!filtered.length) return;
+    const sec=document.createElement('div');sec.className='nav-section';
+    sec.innerHTML=`<div class="nav-section-title">${cat}</div>`;
+    filtered.forEach(t=>{
+      const el=document.createElement('div');
+      el.className='nav-item'+(currentTopic===t.id?' active':'');
+      el.innerHTML=`<i class="ti ${t.icon}"></i>${t.label}`;
+      el.onclick=()=>loadTopic(t.id);
+      sec.appendChild(el);
+    });
+    navList.appendChild(sec);
+  });
+}
+
+function loadTopic(id){
+  currentTopic=id;
+  const t=topics.find(x=>x.id===id);
+  if(!t)return;
+  visited.add(id);
+  document.getElementById('pageTitle').textContent=t.label;
+  document.getElementById('pageSubtitle').textContent=t.subtitle;
+  document.getElementById('breadcrumb').textContent='SQL Reference → '+t.cat;
+  document.getElementById('content').innerHTML=t.render();
+  document.getElementById('progress').style.width=Math.round(visited.size/topics.length*100)+'%';
+  buildNav();
+  document.querySelector('.main').scrollTo(0,0);
+  const sidebar=document.getElementById('sidebar');
+  if(sidebar.classList.contains('open'))sidebar.classList.remove('open');
+}
+
+function filterNav(v){buildNav(v);}
+function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');}
+
+buildNav();
+loadTopic('home');
+</script>
+</body>
+</html>
